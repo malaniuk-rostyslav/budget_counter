@@ -1,0 +1,8 @@
+FROM postgres:12
+
+RUN apt-get update \
+    && apt-get install wget -y
+
+ENV POSTGRES_DB = ${POSTGRES_DB}
+ENV POSTGRES_USER = ${POSTGRES_USER}
+ENV POSTGRES_PASSWORD = ${POSTGRES_PASSWORD}
