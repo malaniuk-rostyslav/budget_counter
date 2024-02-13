@@ -1,5 +1,3 @@
-from typing import Final
-
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
@@ -22,5 +20,3 @@ if settings.BACKEND_CORS_ORIGINS:
 
 
 app.include_router(root_router, prefix="/api")
-
-REDIS_CACHE_URL: Final[str] = f"redis://redis"
