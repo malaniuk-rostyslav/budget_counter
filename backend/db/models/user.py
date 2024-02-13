@@ -1,5 +1,6 @@
 from sqlalchemy import (VARCHAR, BigInteger, Boolean, Column, Date, DateTime,
                         ForeignKey, Index, String, event, func, insert)
+from sqlalchemy.orm import relationship
 
 from db.base import Base
 from db.models import constants
@@ -12,9 +13,6 @@ class User(Base):
     is_superuser = Column(
         Boolean(), default=False, nullable=False, doc="Super user identifier"
     )
-    is_active = Column(
-        Boolean(), default=False, nullable=False, doc="Active user identifier"
-    )
     birthday = Column(Date, doc="Birthday of user")
     created_at = Column(
         DateTime(timezone=False),
@@ -22,6 +20,12 @@ class User(Base):
         server_default=func.now(),
         nullable=False,
         doc="Created at",
+    )
+    settings = relationship(
+        "UserSettings",
+        backref="user",
+        lazy="joined",
+        uselist=False,
     )
 
     __table_args__ = (

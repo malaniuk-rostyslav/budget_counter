@@ -24,14 +24,8 @@ async def create_user(db: DBSession, user_data: Dict, **kwargs) -> Optional[User
     exist = await instance_exist(db, model=User, email=user_data["email"])
     if exist:
         return
-    exist_not_verified = await instance_exist(db, model=User, email=user_data["email"])
     password = set_password_hash(password=user_data.pop("password"))
-    if exist_not_verified:
-        user = db.query(User).filter(User.email == user_data["email"])
-        user.update({**user_data})
-        user = user.one()
-    else:
-        user = User(**user_data, hashed_password=password, **kwargs)
-        db.add(user)
+    user = User(**user_data, hashed_password=password, **kwargs)
+    db.add(user)
     db.flush()
     return user

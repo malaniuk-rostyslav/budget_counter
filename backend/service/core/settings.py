@@ -1,8 +1,8 @@
 import os
 from datetime import date
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Final, List, Optional, Union
 
-from pydantic import AnyHttpUrl, EmailStr, PositiveInt, RedisDsn, validator
+from pydantic import AnyHttpUrl, EmailStr, validator
 from pydantic_settings import BaseSettings
 
 
@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     HTTP_SERVER: AnyHttpUrl
     API_V1_STR: str = "/api/v1"
     DEBUG: bool = os.getenv("DEBUG", True)
+    HASH_ALGORITHM: Final[str] = "HS256"
 
     BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
 
@@ -68,20 +69,12 @@ class Settings(BaseSettings):
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 60  # 60 minutes
     JWT_REFRESH_TOKEN_EXPIRE_MINUTES: int = 1440  # 1 day
 
-    # 60 sec * 60 min * 24 hour = 1 day
-    VERIFICATION_TOKEN_LIFETIME: PositiveInt = 60 * 60 * 24
-
     #########
     # ADMIN #
     #########
     FIRST_SUPERUSER: EmailStr
     FIRST_SUPERUSER_PASSWORD: str
     FIRST_SUPERUSER_BIRTHDAY: date
-
-    ############
-    # REDIS #
-    ############
-    REDIS_URL: RedisDsn
 
     class Config:
         case_sensitive = True
