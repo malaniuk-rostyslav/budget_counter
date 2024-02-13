@@ -5,7 +5,9 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from db.base import Base
-from db.models.user import User  # noqa
+from db.models.category import Category  # noqa
+from db.models.transaction import Transaction  # noqa
+from db.models.user import Device, User, UserSettings  # noqa
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
