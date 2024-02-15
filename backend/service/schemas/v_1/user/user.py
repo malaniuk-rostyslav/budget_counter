@@ -22,7 +22,7 @@ class UserNotificationsUpdate(BaseModel):
 class UserSettings(BaseModel):
     id: PositiveInt
     notification_on: bool
-    currency: models.CurrencyEnum
+    default_currency: models.CurrencyEnum
 
     class Config:
         use_enum_values = True

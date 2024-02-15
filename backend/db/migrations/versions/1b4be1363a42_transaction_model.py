@@ -26,12 +26,13 @@ def upgrade() -> None:
         sa.Column("user_id", sa.BigInteger(), nullable=False),
         sa.Column("category_id", sa.BigInteger(), nullable=False),
         sa.Column("amount", sa.DECIMAL(), nullable=False),
+        sa.Column("currency", sa.VARCHAR(), nullable=False),
         sa.Column("date", sa.Date(), nullable=False),
         sa.Column("note", sa.String(), nullable=True),
         sa.Column(
             "created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False
         ),
-        sa.ForeignKeyConstraint(["category_id"], ["user.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(["category_id"], ["category.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["user_id"], ["user.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
@@ -39,6 +40,13 @@ def upgrade() -> None:
         "ix_transaction_amount_btree",
         "transaction",
         ["amount"],
+        unique=False,
+        postgresql_using="btree",
+    )
+    op.create_index(
+        "ix_transaction_currency_btree",
+        "transaction",
+        ["currency"],
         unique=False,
         postgresql_using="btree",
     )
@@ -66,6 +74,11 @@ def downgrade() -> None:
     )
     op.drop_index(
         "ix_transaction_date_btree", table_name="transaction", postgresql_using="btree"
+    )
+    op.drop_index(
+        "ix_transaction_currency_btree",
+        table_name="transaction",
+        postgresql_using="btree",
     )
     op.drop_index(
         "ix_transaction_amount_btree",

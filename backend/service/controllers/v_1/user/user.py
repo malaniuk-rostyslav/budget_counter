@@ -29,7 +29,7 @@ async def sign_up(
     Responses: \n
     `201` CREATED \n
     `400` BAD REQUEST - User with this email exists \n
-    `422` UNPROCESSABLE_ENTITY - Failed field validation \n
+    `422` UNPROCESSABLE_ENTITY - Failed field validation
     """
     user_data = {
         "email": input_data.email,
@@ -67,7 +67,7 @@ async def get_my_user_info(
     Responses: \n
     `201` CREATED \n
     `400` BAD REQUEST - User with this email exists \n
-    `422` UNPROCESSABLE_ENTITY - Failed field validation \n
+    `422` UNPROCESSABLE_ENTITY - Failed field validation
     """
     user = db.query(models.User).filter(models.User.id == current_user.id).one_or_none()
     return user
@@ -90,12 +90,12 @@ async def update_currency(
     `cross_course`: float \n
     Responses: \n
     `200` OK \n
-    `422` UNPROCESSABLE_ENTITY - Failed field validation \n
+    `422` UNPROCESSABLE_ENTITY - Failed field validation
     """
     us = db.query(models.UserSettings).filter(
         models.UserSettings.user_id == current_user.id
     )
-    us.update({"currency": input_data.currency})
+    us.update({"default_currency": input_data.currency})
     return current_user
 
 
@@ -110,13 +110,12 @@ async def update_notifications(
     current_user: models.User = Depends(get_current_user),
 ) -> UJSONResponse:
     """
-    Update currency \n
+    Update notifications \n
     JSON data \n
-    `currency`: CurrencyEnum \n
-    `cross_course`: float \n
+    `notification_on`: bool \n
     Responses: \n
     `200` OK \n
-    `422` UNPROCESSABLE_ENTITY - Failed field validation \n
+    `422` UNPROCESSABLE_ENTITY - Failed field validation
     """
     us = db.query(models.UserSettings).filter(
         models.UserSettings.user_id == current_user.id

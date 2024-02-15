@@ -21,3 +21,11 @@ class JWTType(str, Enum):
 
 PASSWORD_MIN = 8
 PASSWORD_MAX = 150
+
+
+class SearchTypeEnum(Enum):
+    DAY = "DAY"
+    WEEK = "WEEK"
+    MONTH = "MONTH"
+    YEAR = "YEAR"
+    INTERVAL = "INTERVAL"
