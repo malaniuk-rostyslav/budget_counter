@@ -88,7 +88,7 @@ async def login(
     Responses: \n
     `200` OK - Everything is good (SUCCESS Response) \n
     `400` BAD REQUEST - Wrong credentials \n
-    `422` UNPROCESSABLE_ENTITY - Failed field validation \n
+    `422` UNPROCESSABLE_ENTITY - Failed field validation
     """
 
     try:

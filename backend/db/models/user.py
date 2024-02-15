@@ -27,6 +27,8 @@ class User(Base):
         lazy="joined",
         uselist=False,
     )
+    transaction = relationship("Transaction", back_populates="user", lazy="joined")
+    category = relationship("Category", back_populates="user", lazy="joined")
 
     __table_args__ = (
         Index("ix_user_email_btree", email, unique=True, postgresql_using="btree"),
@@ -45,7 +47,7 @@ class UserSettings(Base):
     notification_on = Column(
         Boolean(), default=True, nullable=False, doc="Is User notification status "
     )
-    currency = Column(
+    default_currency = Column(
         VARCHAR,
         nullable=False,
         default=constants.CurrencyEnum.UAH.value,
@@ -63,7 +65,11 @@ class UserSettings(Base):
             notification_on,
             postgresql_using="btree",
         ),
-        Index("ix_user_settings_currency_btree", currency, postgresql_using="btree"),
+        Index(
+            "ix_user_settings_default_currency_btree",
+            default_currency,
+            postgresql_using="btree",
+        ),
     )
 
 

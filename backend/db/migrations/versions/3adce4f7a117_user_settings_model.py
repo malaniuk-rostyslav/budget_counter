@@ -25,15 +25,15 @@ def upgrade() -> None:
         sa.Column("id", sa.BigInteger(), nullable=False),
         sa.Column("user_id", sa.BigInteger(), nullable=False),
         sa.Column("notification_on", sa.Boolean(), nullable=False),
-        sa.Column("currency", sa.VARCHAR(), nullable=False),
+        sa.Column("default_currency", sa.VARCHAR(), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.ForeignKeyConstraint(["user_id"], ["user.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(
-        "ix_user_settings_currency_btree",
+        "ix_user_settings_default_currency_btree",
         "user_settings",
-        ["currency"],
+        ["default_currency"],
         unique=False,
         postgresql_using="btree",
     )
@@ -55,7 +55,7 @@ def downgrade() -> None:
         postgresql_using="btree",
     )
     op.drop_index(
-        "ix_user_settings_currency_btree",
+        "ix_user_settings_default_currency_btree",
         table_name="user_settings",
         postgresql_using="btree",
     )
