@@ -1,6 +1,8 @@
 from .auth.auth import AuthForm
 from .auth.jwt_token import JWTTokenPayload, JWTTokensResponse
-from .user.user import User, UserAgentDevice, UserCreate
+from .category.category import Category, CategoryCreate
+from .user.user import (User, UserAgentDevice, UserCreate, UserCurrencyUpdate,
+                        UserNotificationsUpdate)
 
 __all__ = (
     # Auth
@@ -12,4 +14,9 @@ __all__ = (
     "UserCreate",
     "UserAgentDevice",
     "User",
+    "UserCurrencyUpdate",
+    "UserNotificationsUpdate",
+    # Category
+    "CategoryCreate",
+    "Category",
 )
