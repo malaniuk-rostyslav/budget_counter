@@ -7,14 +7,6 @@ from pydantic import (BaseModel, EmailStr, Field, PositiveInt, model_validator,
 from db import models
 
 
-class UserCurrencyUpdate(BaseModel):
-    currency: models.CurrencyEnum
-    cross_course: float
-
-    class Config:
-        use_enum_values = True
-
-
 class UserNotificationsUpdate(BaseModel):
     notification_on: bool
 
@@ -27,6 +19,13 @@ class UserSettings(BaseModel):
     class Config:
         use_enum_values = True
         from_attributes = True
+
+
+class UserCurrencyUpdate(BaseModel):
+    currency: models.CurrencyEnum
+
+    class Config:
+        use_enum_values = True
 
 
 class UserBase(BaseModel):
