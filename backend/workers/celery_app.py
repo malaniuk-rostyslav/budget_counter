@@ -43,4 +43,6 @@ class SqlAlchemyTask(Task, ABC):
         return self._session
 
 
-celery_app.conf.task_routes = {"workers.celery_tasks.test_celery": "main-queue"}
+celery_app.conf.task_routes = {
+    "workers.celery_tasks.update_currency_in_transactions": "currency-queue",
+}

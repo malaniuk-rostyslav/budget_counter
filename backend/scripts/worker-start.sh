@@ -1,4 +1,4 @@
 #! /usr/bin/env bash
 set -e
 
-celery -A workers.celery_tasks worker -l info -Q main-queue -E
+celery -A workers.celery_tasks worker -l info -Q currency-queue

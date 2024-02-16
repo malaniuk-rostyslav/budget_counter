@@ -12,6 +12,7 @@ from db import models
 from db.session import DBSession
 from service.core.dependencies import get_current_user, get_db
 from service.schemas import v_1 as schemas_v_1
+from workers.celery_app import celery_app
 
 router = APIRouter()
 
@@ -297,3 +298,39 @@ async def get_my_transactions_by_filter(
             models.Transaction.date <= end_date,
         )
     return paginate(transactions)
+
+
+@router.patch(
+    "/currency/",
+    status_code=status.HTTP_200_OK,
+)
+async def update_transactions_currency(
+    input_data: schemas_v_1.TransactionCurrencyUpdate,
+    db: DBSession = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+) -> UJSONResponse:
+    """
+    Update currency \n
+    JSON data \n
+    `currency_to_update`: CurrencyEnum \n
+    `currency_to_replace`: CurrencyEnum \n
+    `cross_course`: float \n
+    `start_date`: date \n
+    `end_date`: date \n
+    Responses: \n
+    `200` OK \n
+    `422` UNPROCESSABLE_ENTITY - Failed field validation
+    """
+    task = "workers.celery_tasks.update_currency_in_transactions"
+    celery_app.send_task(
+        task,
+        args=[
+            input_data.currency_to_update,
+            input_data.currency_to_replace,
+            input_data.cross_course,
+            input_data.start_date,
+            input_data.end_date,
+            current_user.id,
+        ],
+    )
+    return status.HTTP_200_OK

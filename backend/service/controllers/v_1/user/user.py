@@ -87,7 +87,6 @@ async def update_currency(
     Update currency \n
     JSON data \n
     `currency`: CurrencyEnum \n
-    `cross_course`: float \n
     Responses: \n
     `200` OK \n
     `422` UNPROCESSABLE_ENTITY - Failed field validation
@@ -96,6 +95,7 @@ async def update_currency(
         models.UserSettings.user_id == current_user.id
     )
     us.update({"default_currency": input_data.currency})
+    db.commit()
     return current_user
 
 
