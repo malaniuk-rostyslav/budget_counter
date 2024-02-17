@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -7,12 +7,13 @@ from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
 from pydantic import PositiveInt
 from sqlalchemy import and_, exists
-from sqlalchemy.orm import selectinload, with_loader_criteria
 
 from db import models
 from db.session import DBSession
 from service.core.dependencies import get_current_user, get_db
 from service.schemas import v_1 as schemas_v_1
+
+from ..utils import category_tr_filter_search, search_enum_check
 
 router = APIRouter()
 
@@ -241,85 +242,10 @@ async def get_my_transactions_by_filter(
     `201` CREATED \n
     `400` BAD REQUEST - Wrong filter
     """
-    search_enum_values = [st.value for st in models.SearchTypeEnum]
-    if search_type.upper() not in search_enum_values or (
-        search_type.upper() == models.SearchTypeEnum.INTERVAL.value
-        and (
-            not start_date
-            or not end_date
-            or start_date > end_date
-            or end_date > date.today()
-        )
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Wrong filter"
-        )
-    if search_type.upper() == models.SearchTypeEnum.DAY.value:
-        categories = (
-            db.query(models.Category)
-            .join(models.Transaction)
-            .filter(models.Category.user_id == current_user.id)
-            .options(
-                selectinload(models.Category.transaction),
-                with_loader_criteria(
-                    models.Transaction, models.Transaction.date == date.today()
-                ),
-            )
-        )
-    elif search_type.upper() == models.SearchTypeEnum.WEEK.value:
-        start_of_week = date.today() - timedelta(days=date.today().weekday())
-        categories = (
-            db.query(models.Category)
-            .join(models.Transaction)
-            .filter(models.Category.user_id == current_user.id)
-            .options(
-                selectinload(models.Category.transaction),
-                with_loader_criteria(
-                    models.Transaction, models.Transaction.date >= start_of_week
-                ),
-            )
-        )
-    elif search_type.upper() == models.SearchTypeEnum.MONTH.value:
-        start_of_month = date(date.today().year, date.today().month, 1)
-        categories = (
-            db.query(models.Category)
-            .join(models.Transaction)
-            .filter(models.Category.user_id == current_user.id)
-            .options(
-                selectinload(models.Category.transaction),
-                with_loader_criteria(
-                    models.Transaction, models.Transaction.date >= start_of_month
-                ),
-            )
-        )
-    elif search_type.upper() == models.SearchTypeEnum.YEAR.value:
-        start_of_year = date(date.today().year, 1, 1)
-        categories = (
-            db.query(models.Category)
-            .join(models.Transaction)
-            .filter(models.Category.user_id == current_user.id)
-            .options(
-                selectinload(models.Category.transaction),
-                with_loader_criteria(
-                    models.Transaction, models.Transaction.date >= start_of_year
-                ),
-            )
-        )
-    elif search_type.upper() == models.SearchTypeEnum.INTERVAL.value:
-        start_of_year = date(date.today().year, 1, 1)
-        categories = (
-            db.query(models.Category)
-            .join(models.Transaction)
-            .filter(models.Category.user_id == current_user.id)
-            .options(
-                selectinload(models.Category.transaction),
-                with_loader_criteria(
-                    models.Transaction,
-                    models.Transaction.date >= start_date,
-                    models.Transaction.date <= end_date,
-                ),
-            )
-        )
+    search_enum_check(search_type, start_date, end_date)
+    categories = category_tr_filter_search(
+        db, search_type, current_user.id, start_date, end_date
+    )
     return paginate(categories)
 
 
@@ -345,100 +271,10 @@ async def get_my_transactions_by_filter(
     `201` CREATED \n
     `400` BAD REQUEST - Wrong filter
     """
-    search_enum_values = [st.value for st in models.SearchTypeEnum]
-    if search_type.upper() not in search_enum_values or (
-        search_type.upper() == models.SearchTypeEnum.INTERVAL.value
-        and (
-            not start_date
-            or not end_date
-            or start_date > end_date
-            or end_date > date.today()
-        )
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Wrong filter"
-        )
-    if search_type.upper() == models.SearchTypeEnum.DAY.value:
-        categories = (
-            db.query(models.Category)
-            .join(models.Transaction)
-            .filter(
-                models.Category.user_id == current_user.id,
-                models.Category.type == models.CategoryTypeEnum.EXPENSE.value,
-            )
-            .options(
-                selectinload(models.Category.transaction),
-                with_loader_criteria(
-                    models.Transaction, models.Transaction.date == date.today()
-                ),
-            )
-        )
-    elif search_type.upper() == models.SearchTypeEnum.WEEK.value:
-        start_of_week = date.today() - timedelta(days=date.today().weekday())
-        categories = (
-            db.query(models.Category)
-            .join(models.Transaction)
-            .filter(
-                models.Category.user_id == current_user.id,
-                models.Category.type == models.CategoryTypeEnum.EXPENSE.value,
-            )
-            .options(
-                selectinload(models.Category.transaction),
-                with_loader_criteria(
-                    models.Transaction, models.Transaction.date >= start_of_week
-                ),
-            )
-        )
-    elif search_type.upper() == models.SearchTypeEnum.MONTH.value:
-        start_of_month = date(date.today().year, date.today().month, 1)
-        categories = (
-            db.query(models.Category)
-            .join(models.Transaction)
-            .filter(
-                models.Category.user_id == current_user.id,
-                models.Category.type == models.CategoryTypeEnum.EXPENSE.value,
-            )
-            .options(
-                selectinload(models.Category.transaction),
-                with_loader_criteria(
-                    models.Transaction, models.Transaction.date >= start_of_month
-                ),
-            )
-        )
-    elif search_type.upper() == models.SearchTypeEnum.YEAR.value:
-        start_of_year = date(date.today().year, 1, 1)
-        categories = (
-            db.query(models.Category)
-            .join(models.Transaction)
-            .filter(
-                models.Category.user_id == current_user.id,
-                models.Category.type == models.CategoryTypeEnum.EXPENSE.value,
-            )
-            .options(
-                selectinload(models.Category.transaction),
-                with_loader_criteria(
-                    models.Transaction, models.Transaction.date >= start_of_year
-                ),
-            )
-        )
-    elif search_type.upper() == models.SearchTypeEnum.INTERVAL.value:
-        start_of_year = date(date.today().year, 1, 1)
-        categories = (
-            db.query(models.Category)
-            .join(models.Transaction)
-            .filter(
-                models.Category.user_id == current_user.id,
-                models.Category.type == models.CategoryTypeEnum.EXPENSE.value,
-            )
-            .options(
-                selectinload(models.Category.transaction),
-                with_loader_criteria(
-                    models.Transaction,
-                    models.Transaction.date >= start_date,
-                    models.Transaction.date <= end_date,
-                ),
-            )
-        )
+    search_enum_check(search_type, start_date, end_date)
+    categories = category_tr_filter_search(
+        db, search_type, current_user.id, start_date, end_date, expense=True
+    )
     return paginate(categories)
 
 
@@ -464,98 +300,8 @@ async def get_my_transactions_by_filter(
     `201` CREATED \n
     `400` BAD REQUEST - Wrong filter
     """
-    search_enum_values = [st.value for st in models.SearchTypeEnum]
-    if search_type.upper() not in search_enum_values or (
-        search_type.upper() == models.SearchTypeEnum.INTERVAL.value
-        and (
-            not start_date
-            or not end_date
-            or start_date > end_date
-            or end_date > date.today()
-        )
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Wrong filter"
-        )
-    if search_type.upper() == models.SearchTypeEnum.DAY.value:
-        categories = (
-            db.query(models.Category)
-            .join(models.Transaction)
-            .filter(
-                models.Category.user_id == current_user.id,
-                models.Category.type == models.CategoryTypeEnum.INCOME.value,
-            )
-            .options(
-                selectinload(models.Category.transaction),
-                with_loader_criteria(
-                    models.Transaction, models.Transaction.date == date.today()
-                ),
-            )
-        )
-    elif search_type.upper() == models.SearchTypeEnum.WEEK.value:
-        start_of_week = date.today() - timedelta(days=date.today().weekday())
-        categories = (
-            db.query(models.Category)
-            .join(models.Transaction)
-            .filter(
-                models.Category.user_id == current_user.id,
-                models.Category.type == models.CategoryTypeEnum.INCOME.value,
-            )
-            .options(
-                selectinload(models.Category.transaction),
-                with_loader_criteria(
-                    models.Transaction, models.Transaction.date >= start_of_week
-                ),
-            )
-        )
-    elif search_type.upper() == models.SearchTypeEnum.MONTH.value:
-        start_of_month = date(date.today().year, date.today().month, 1)
-        categories = (
-            db.query(models.Category)
-            .join(models.Transaction)
-            .filter(
-                models.Category.user_id == current_user.id,
-                models.Category.type == models.CategoryTypeEnum.INCOME.value,
-            )
-            .options(
-                selectinload(models.Category.transaction),
-                with_loader_criteria(
-                    models.Transaction, models.Transaction.date >= start_of_month
-                ),
-            )
-        )
-    elif search_type.upper() == models.SearchTypeEnum.YEAR.value:
-        start_of_year = date(date.today().year, 1, 1)
-        categories = (
-            db.query(models.Category)
-            .join(models.Transaction)
-            .filter(
-                models.Category.user_id == current_user.id,
-                models.Category.type == models.CategoryTypeEnum.INCOME.value,
-            )
-            .options(
-                selectinload(models.Category.transaction),
-                with_loader_criteria(
-                    models.Transaction, models.Transaction.date >= start_of_year
-                ),
-            )
-        )
-    elif search_type.upper() == models.SearchTypeEnum.INTERVAL.value:
-        start_of_year = date(date.today().year, 1, 1)
-        categories = (
-            db.query(models.Category)
-            .join(models.Transaction)
-            .filter(
-                models.Category.user_id == current_user.id,
-                models.Category.type == models.CategoryTypeEnum.INCOME.value,
-            )
-            .options(
-                selectinload(models.Category.transaction),
-                with_loader_criteria(
-                    models.Transaction,
-                    models.Transaction.date >= start_date,
-                    models.Transaction.date <= end_date,
-                ),
-            )
-        )
+    search_enum_check(search_type, start_date, end_date)
+    categories = category_tr_filter_search(
+        db, search_type, current_user.id, start_date, end_date, income=True
+    )
     return paginate(categories)

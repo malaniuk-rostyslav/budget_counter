@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -13,6 +13,8 @@ from db.session import DBSession
 from service.core.dependencies import get_current_user, get_db
 from service.schemas import v_1 as schemas_v_1
 from workers.celery_app import celery_app
+
+from ..utils import search_enum_check, transactions_filter_search
 
 router = APIRouter()
 
@@ -237,19 +239,7 @@ async def get_my_transactions_by_filter(
     `400` BAD REQUEST - Wrong filter \n
     `404` NOT FOUND - Category not found
     """
-    search_enum_values = [st.value for st in models.SearchTypeEnum]
-    if search_type.upper() not in search_enum_values or (
-        search_type.upper() == models.SearchTypeEnum.INTERVAL.value
-        and (
-            not start_date
-            or not end_date
-            or start_date > end_date
-            or end_date > date.today()
-        )
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Wrong filter"
-        )
+    search_enum_check(search_type, start_date, end_date)
     category_exists = db.query(
         exists().where(
             and_(
@@ -263,40 +253,7 @@ async def get_my_transactions_by_filter(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Category not found",
         )
-    if search_type.upper() == models.SearchTypeEnum.DAY.value:
-        transactions = db.query(models.Transaction).filter(
-            models.Transaction.user_id == current_user.id,
-            models.Transaction.category_id == category_id,
-            models.Transaction.date == date.today(),
-        )
-    elif search_type.upper() == models.SearchTypeEnum.WEEK.value:
-        start_of_week = date.today() - timedelta(days=date.today().weekday())
-        transactions = db.query(models.Transaction).filter(
-            models.Transaction.user_id == current_user.id,
-            models.Transaction.category_id == category_id,
-            models.Transaction.date >= start_of_week,
-        )
-    elif search_type.upper() == models.SearchTypeEnum.MONTH.value:
-        start_of_month = date(date.today().year, date.today().month, 1)
-        transactions = db.query(models.Transaction).filter(
-            models.Transaction.user_id == current_user.id,
-            models.Transaction.category_id == category_id,
-            models.Transaction.date >= start_of_month,
-        )
-    elif search_type.upper() == models.SearchTypeEnum.YEAR.value:
-        start_of_year = date(date.today().year, 1, 1)
-        transactions = db.query(models.Transaction).filter(
-            models.Transaction.user_id == current_user.id,
-            models.Transaction.category_id == category_id,
-            models.Transaction.date >= start_of_year,
-        )
-    elif search_type.upper() == models.SearchTypeEnum.INTERVAL.value:
-        transactions = db.query(models.Transaction).filter(
-            models.Transaction.user_id == current_user.id,
-            models.Transaction.category_id == category_id,
-            models.Transaction.date >= start_date,
-            models.Transaction.date <= end_date,
-        )
+    transactions = transactions_filter_search()
     return paginate(transactions)
 
 
