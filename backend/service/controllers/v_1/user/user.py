@@ -11,7 +11,7 @@ router = APIRouter()
 
 
 @router.post(
-    "/register/",
+    "/register",
     status_code=status.HTTP_201_CREATED,
     response_model=schemas_v_1.User,
 )
@@ -74,11 +74,11 @@ async def get_my_user_info(
 
 
 @router.patch(
-    "/currency/",
+    "/currency",
     status_code=status.HTTP_200_OK,
     response_model=schemas_v_1.User,
 )
-async def update_currency(
+async def update_default_currency(
     input_data: schemas_v_1.UserCurrencyUpdate,
     db: DBSession = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
@@ -100,7 +100,7 @@ async def update_currency(
 
 
 @router.patch(
-    "/notifications/",
+    "/notifications",
     status_code=status.HTTP_200_OK,
     response_model=schemas_v_1.User,
 )

@@ -27,8 +27,8 @@ class User(Base):
         lazy="joined",
         uselist=False,
     )
-    transaction = relationship("Transaction", back_populates="user", lazy="joined")
-    category = relationship("Category", back_populates="user", lazy="joined")
+    transaction = relationship("Transaction", back_populates="user", lazy="noload")
+    category = relationship("Category", back_populates="user", lazy="noload")
 
     __table_args__ = (
         Index("ix_user_email_btree", email, unique=True, postgresql_using="btree"),

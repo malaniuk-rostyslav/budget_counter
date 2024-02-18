@@ -15,6 +15,16 @@ class TransactionCreate(BaseModel):
     note: Optional[str] = None
 
 
+class TransactionOnCreate(TransactionCreate):
+    id: PositiveInt
+    currency: models.CurrencyEnum
+    user: User
+
+    class Config:
+        use_enum_values = True
+        from_attributes = True
+
+
 class Transaction(TransactionCreate):
     id: PositiveInt
     currency: models.CurrencyEnum

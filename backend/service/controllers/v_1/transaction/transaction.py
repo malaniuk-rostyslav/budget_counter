@@ -7,6 +7,7 @@ from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
 from pydantic import PositiveInt
 from sqlalchemy import and_, exists
+from sqlalchemy.orm import joinedload
 
 from db import models
 from db.session import DBSession
@@ -20,9 +21,9 @@ router = APIRouter()
 
 
 @router.post(
-    "/{category_id}/",
+    "/{category_id}",
     status_code=status.HTTP_201_CREATED,
-    response_model=schemas_v_1.Transaction,
+    response_model=schemas_v_1.TransactionOnCreate,
 )
 async def create_transaction(
     category_id: PositiveInt,
@@ -73,9 +74,9 @@ async def create_transaction(
 
 
 @router.put(
-    "/{transaction_id}/",
+    "/{transaction_id}",
     status_code=status.HTTP_200_OK,
-    response_model=schemas_v_1.Transaction,
+    response_model=schemas_v_1.TransactionOnCreate,
 )
 async def update_transaction(
     transaction_id: PositiveInt,
@@ -112,7 +113,7 @@ async def update_transaction(
     return transaction
 
 
-@router.delete("/{transaction_id}/")
+@router.delete("/{transaction_id}")
 async def update_transaction(
     transaction_id: PositiveInt,
     db: DBSession = Depends(get_db),
@@ -141,7 +142,7 @@ async def update_transaction(
 
 
 @router.get(
-    "/{transaction_id}/",
+    "/{transaction_id}",
     status_code=status.HTTP_200_OK,
     response_model=schemas_v_1.Transaction,
 )
@@ -165,6 +166,7 @@ async def get_transaction_by_id(
             models.Transaction.id == transaction_id,
             models.Transaction.user_id == current_user.id,
         )
+        .options(joinedload(models.Transaction.category))
         .one_or_none()
     )
     if not transaction:
@@ -176,7 +178,7 @@ async def get_transaction_by_id(
 
 
 @router.get(
-    "/category/{category_id}/",
+    "/category/{category_id}",
     status_code=status.HTTP_200_OK,
     response_model=Page[schemas_v_1.Transaction],
 )
@@ -206,15 +208,19 @@ async def get_my_transactions_by_category(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Category not found",
         )
-    transactions = db.query(models.Transaction).filter(
-        models.Transaction.user_id == current_user.id,
-        models.Transaction.category_id == category_id,
+    transactions = (
+        db.query(models.Transaction)
+        .filter(
+            models.Transaction.user_id == current_user.id,
+            models.Transaction.category_id == category_id,
+        )
+        .options(joinedload(models.Transaction.category))
     )
     return paginate(transactions)
 
 
 @router.get(
-    "/category/{category_id}/filter/",
+    "/category/{category_id}/filter",
     status_code=status.HTTP_200_OK,
     response_model=Page[schemas_v_1.Transaction],
 )
@@ -253,12 +259,14 @@ async def get_my_transactions_by_filter(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Category not found",
         )
-    transactions = transactions_filter_search()
+    transactions = transactions_filter_search(
+        db, search_type, current_user.id, start_date, end_date, category_id
+    )
     return paginate(transactions)
 
 
 @router.patch(
-    "/currency/",
+    "/currency",
     status_code=status.HTTP_200_OK,
 )
 async def update_transactions_currency(

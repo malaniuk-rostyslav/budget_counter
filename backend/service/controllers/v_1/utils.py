@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 
 from fastapi import HTTPException, status
-from sqlalchemy.orm import selectinload, with_loader_criteria
+from sqlalchemy.orm import joinedload, selectinload, with_loader_criteria
 
 from db import models
 
@@ -59,7 +59,7 @@ def transactions_filter_search(
             models.Transaction.date >= start_date,
             models.Transaction.date <= end_date,
         )
-    return transactions
+    return transactions.options(joinedload(models.Transaction.category))
 
 
 def category_tr_filter_search(
@@ -85,7 +85,9 @@ def category_tr_filter_search(
             .filter(models.Category.user_id == user_id)
             .options(
                 selectinload(models.Category.transaction),
-                with_loader_criteria(models.Transaction, models.Transaction.id == 1),
+                with_loader_criteria(
+                    models.Transaction, models.Transaction.date >= start_of_week
+                ),
             )
         )
     elif search_type.upper() == models.SearchTypeEnum.MONTH.value:

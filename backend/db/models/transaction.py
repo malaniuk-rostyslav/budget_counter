@@ -36,7 +36,7 @@ class Transaction(Base):
         nullable=False,
         doc="Created at",
     )
-    category = relationship("Category", back_populates="transaction", lazy="joined")
+    category = relationship("Category", back_populates="transaction", lazy="noload")
     user = relationship("User", back_populates="transaction", lazy="joined")
 
     __table_args__ = (

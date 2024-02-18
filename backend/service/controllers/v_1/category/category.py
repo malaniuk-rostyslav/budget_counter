@@ -7,6 +7,7 @@ from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
 from pydantic import PositiveInt
 from sqlalchemy import and_, exists
+from sqlalchemy.orm import joinedload
 
 from db import models
 from db.session import DBSession
@@ -60,7 +61,7 @@ async def create_category(
 
 
 @router.put(
-    "/{category_id}/",
+    "/{category_id}",
     status_code=status.HTTP_201_CREATED,
     response_model=schemas_v_1.Category,
 )
@@ -96,7 +97,7 @@ async def create_category(
     return category
 
 
-@router.delete("/{category_id}/")
+@router.delete("/{category_id}")
 async def delete_category(
     category_id: PositiveInt,
     db: DBSession = Depends(get_db),
@@ -138,14 +139,17 @@ async def get_my_categories(
     Responses: \n
     `200` OK
     """
-    my_categories = db.query(models.Category).filter(
-        models.Category.user_id == current_user.id
+    my_categories = (
+        db.query(models.Category)
+        .outerjoin(models.Transaction)
+        .filter(models.Category.user_id == current_user.id)
+        .options(joinedload(models.Category.transaction))
     )
     return paginate(my_categories)
 
 
 @router.get(
-    "/my/expense/",
+    "/my/expense",
     status_code=status.HTTP_200_OK,
     response_model=Page[schemas_v_1.CategoryTransactions],
 )
@@ -158,15 +162,19 @@ async def get_my_expense_categories(
     Responses: \n
     `200` OK
     """
-    my_categories = db.query(models.Category).filter(
-        models.Category.user_id == current_user.id,
-        models.Category.type == models.CategoryTypeEnum.EXPENSE.value,
+    my_categories = (
+        db.query(models.Category)
+        .filter(
+            models.Category.user_id == current_user.id,
+            models.Category.type == models.CategoryTypeEnum.EXPENSE.value,
+        )
+        .options(joinedload(models.Category.transaction))
     )
     return paginate(my_categories)
 
 
 @router.get(
-    "/my/income/",
+    "/my/income",
     status_code=status.HTTP_200_OK,
     response_model=Page[schemas_v_1.CategoryTransactions],
 )
@@ -179,15 +187,19 @@ async def get_my_income_categories(
     Responses: \n
     `200` OK
     """
-    my_categories = db.query(models.Category).filter(
-        models.Category.user_id == current_user.id,
-        models.Category.type == models.CategoryTypeEnum.INCOME.value,
+    my_categories = (
+        db.query(models.Category)
+        .filter(
+            models.Category.user_id == current_user.id,
+            models.Category.type == models.CategoryTypeEnum.INCOME.value,
+        )
+        .options(joinedload(models.Category.transaction))
     )
     return paginate(my_categories)
 
 
 @router.get(
-    "/{category_id}/",
+    "/{category_id}",
     status_code=status.HTTP_200_OK,
     response_model=schemas_v_1.CategoryTransactions,
 )
@@ -210,6 +222,7 @@ async def get_my_category_by_id(
             models.Category.id == category_id,
             models.Category.user_id == current_user.id,
         )
+        .options(joinedload(models.Category.transaction))
         .one_or_none()
     )
     if not category:
@@ -221,7 +234,7 @@ async def get_my_category_by_id(
 
 
 @router.get(
-    "/transaction/filter/",
+    "/transaction/filter",
     status_code=status.HTTP_200_OK,
     response_model=Page[schemas_v_1.CategoryTransactions],
 )
@@ -250,7 +263,7 @@ async def get_my_transactions_by_filter(
 
 
 @router.get(
-    "/expense/transaction/filter/",
+    "/expense/transaction/filter",
     status_code=status.HTTP_200_OK,
     response_model=Page[schemas_v_1.CategoryTransactions],
 )
@@ -279,7 +292,7 @@ async def get_my_transactions_by_filter(
 
 
 @router.get(
-    "/income/transaction/filter/",
+    "/income/transaction/filter",
     status_code=status.HTTP_200_OK,
     response_model=Page[schemas_v_1.CategoryTransactions],
 )
